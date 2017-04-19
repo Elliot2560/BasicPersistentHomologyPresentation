@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <meta name="author" content="Elliot Yu">
+  <meta name="dcterms.date" content="2017-04-19">
+  <title>Basic Persistent Homology with JavaPlex</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="reveal.js/css/reveal.css">
+  <style type="text/css">code{white-space: pre;}</style>
+  <link rel="stylesheet" href="reveal.js/css/theme/solarized.css" id="theme">
+  <link rel="stylesheet" href="custom.css"/>
+  <!-- Printing and PDF exports -->
+  <script>
+    var link = document.createElement( 'link' );
+    link.rel = 'stylesheet';
+    link.type = 'text/css';
+    link.href = window.location.search.match( /print-pdf/gi ) ? 'reveal.js/css/print/pdf.css' : 'reveal.js/css/print/paper.css';
+    document.getElementsByTagName( 'head' )[0].appendChild( link );
+  </script>
+  <!--[if lt IE 9]>
+  <script src="reveal.js/lib/js/html5shiv.js"></script>
+  <![endif]-->
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_CHTML-full" type="text/javascript"></script>
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+<section>
+  <h1 class="title">Basic Persistent Homology with JavaPlex</h1>
+  <p class="author">Elliot Yu</p>
+  <p class="date">April 19, 2017</p>
+</section>
+
+<section><section id="introduction" class="titleslide slide level1"><h1>Introduction</h1></section><section id="javaplex" class="slide level2">
+<h2>JavaPlex</h2>
+<p>JavaPlex is a software package developed by the Computational Topology Workgroup at Stanford University. It implements some algorithms that compute persistent homology, and is based on java.</p>
+<p>It has the benefit of being efficient and multi-platform. It can be easily accessed from Matlab and java-based systems.</p>
+<p>The project page is here: <a href="https://appliedtopology.github.io/javaplex/" class="uri">https://appliedtopology.github.io/javaplex/</a>.</p>
+<aside class="notes">
+    <p>I have chosen to use JavaPlex mainly because it is truly fast flexible, being written in Java.</p>
+    <p>Some other popular software packages have important flaws.</p>
+    <p>Dionysus lacks documentation, is relatively slow (especially with python bindings), and has bugs that cannot be easily fixed when the ambient dimension of data points is larger than 4.</p>
+</aside>
+</section></section>
+<section><section id="computational-techniques" class="titleslide slide level1"><h1>Computational techniques</h1></section><section id="landmark-points" class="slide level2">
+<h2>Landmark points</h2>
+<aside class="notes">
+    <p>JavaPlex uses a combination of computational techniques to reduce the amount of calculation. </p>
+    <p>Randomly selected landmark points are uneven, and thus might introduce more noise to the calculation.</p>
+    <p>Landmark points chosen by maxmin method can be susceptible to outliers, thus obfuscating the real shape of the data.</p>
+    <p>In any case, choose the appropriate method according to the data set.</p>
+</aside>
+<p>First, instead of constructing a persistence module on the entire data set <span class="math inline">\(Z\)</span>, a small number of points are selected to represent the structure of the data set. These are called the landmark points, denoted <span class="math inline">\(L = \{l_0, l_1, \dots, l_n\}\)</span>.</p>
+<p>There are two ways of selecting them, randomly, or inductively by the maxmin of distances.</p>
+<p>Specifically, the second method is:</p>
+<ul>
+<li><span class="math inline">\(l_0\)</span> is chosen randomly.</li>
+<li>When <span class="math inline">\(k\)</span> landmark points are already chosen, chose the point <span class="math inline">\(z\in Z\)</span> to be <span class="math inline">\(l_{k+1}\)</span> if <span class="math inline">\(\min_{i = 0, \dots, k} \{d(z, l_i) \}\)</span> is maximal.</li>
+</ul>
+</section><section id="witness-stream-complex" class="slide level2">
+<h2>Witness stream complex</h2>
+<p>The witness stream complex <span class="math inline">\(W(Z, L, t)\)</span> is indexed by a discrete parameter <span class="math inline">\(t\)</span>, taking values in a chosen range.</p>
+<p>Let <span class="math inline">\(m_k(z)\)</span> be the distance from a point in <span class="math inline">\(Z\)</span> to its <span class="math inline">\(k+1\)</span>-th closest landmark point.</p>
+<p>The vertex set of <span class="math inline">\(W(Z, L, t)\)</span> is <span class="math inline">\(L\)</span>.</p>
+<p>For <span class="math inline">\(k &gt; 0\)</span> and vertices <span class="math inline">\(l_i\)</span>, the <span class="math inline">\(k\)</span>-simplex <span class="math inline">\([l_0 l_1 \dots l_k]\)</span> is in <span class="math inline">\(W(Z, L, t)\)</span> if all of its faces are, and if there exists a witness point <span class="math inline">\(z\in Z\)</span> such that<br />
+<span class="math display">\[
+\max\left\{ d(l_0, z), d(l_1, z), \dots, d(l_k, z) \right\} \leq t + m_k (z) \&gt;.
+\]</span></p>
+<aside class="notes">
+    <p>Intuitively, if a potential k-simplex is formed by points that are "almost" the nearest k points from a point in the data set, then we add it to the complex. </p>
+</aside>
+</section><section id="homology-over-fields" class="slide level2">
+<h2>Homology over fields</h2>
+<p>Another way of speeding up computation is to calculate homology with coefficients in a field (e.g. <span class="math inline">\(\mathbb Z/p\mathbb Z\)</span> for a prime <span class="math inline">\(p\)</span>, or <span class="math inline">\(\mathbb Q\)</span>) instead of <span class="math inline">\(\mathbb Z\)</span>.</p>
+<p>That will allow us to use standard linear algebra techniques and simply count the ranks of boundary operators, instead of computing the Smith normal form.</p>
+<aside class="notes">
+    <p>JavaPlex allows us to compute the homology group over Z/pZ for a prime p of our choosing.</p>
+    <p>It is optimised for p = 2, and by default uses this field.</p>
+</aside>
+</section><section id="a-corollary-of-the-universal-coefficient-theorem" class="slide level2">
+<h2>A corollary of the universal coefficient theorem</h2>
+<p>(Corollary 3A.6 of Algebraic Topology by Allen Hatcher:)</p>
+<p><strong>(a)</strong> <span class="math inline">\(H_n(X; \mathbb Q) \simeq H_n(X;\mathbb Z) \otimes \mathbb Q\)</span>, so when <span class="math inline">\(H_n(X; \mathbb Z)\)</span> is finitely generated, the dimension of <span class="math inline">\(H_n(X;\mathbb Q)\)</span> as a vector space over <span class="math inline">\(\mathbb Q\)</span> equals the rank of <span class="math inline">\(H_n(X;\mathbb Z)\)</span>.</p>
+<p><strong>(b)</strong> If <span class="math inline">\(H_n(X; \mathbb Z)\)</span> and <span class="math inline">\(H_{n-1}(X;\mathbb Z)\)</span> are finitely generated, then for <span class="math inline">\(p\)</span> prime, <span class="math inline">\(H_n(X;\mathbb Z_p)\)</span> consists of</p>
+<p>i. a <span class="math inline">\(\mathbb Z_p\)</span> summand for each <span class="math inline">\(\mathbb Z\)</span> summand of <span class="math inline">\(H_n(X; \mathbb Z)\)</span>,</p>
+<p>ii. a <span class="math inline">\(\mathbb Z_p\)</span> summand for each <span class="math inline">\(\mathbb Z_{p^k}\)</span> summand in <span class="math inline">\(H_n(X;\mathbb Z)\)</span>, <span class="math inline">\(k\geq 1\)</span>,</p>
+<p>iii. a <span class="math inline">\(\mathbb Z_p\)</span> summand for each <span class="math inline">\(\mathbb Z_{p^k}\)</span> summand in <span class="math inline">\(H_{n-1}(X;\mathbb Z)\)</span>, <span class="math inline">\(k\geq 1\)</span>.</p>
+<aside class="notes">
+    <p>To understand this theorem, specifically what the "summands" refer to, we need to recall the fundamental theorem of finitely generated abelian groups (FTFGAG).</p>
+    <p>A familiar form of the theorem states that the torsion part of the group can be decomposed into successive factors of Z/nZ with each n dividing the next.</p>
+    <p>Another form of the theorem states that the torsion part can be decomposed into factors of Z/nZ where each n is a prime power.</p>
+    <p>Also the fact that this theorem only applies to finitely generated </p>
+</aside>
+</section><section id="example-mathbb-rp2" class="slide level2">
+<h2>Example: <span class="math inline">\(\mathbb RP^2\)</span></h2>
+<p>We know that</p>
+<p><span class="math display">\[ H_i(\mathbb RP^2; \mathbb Z) = \begin{cases} \mathbb Z &amp; i = 1 \\ \mathbb Z_2 &amp; i = 1 \\ 0 &amp; i \geq 2  \end{cases} \&gt;. \]</span></p>
+<p>Using the corollary, we can calculate the homology groups over <span class="math inline">\(\mathbb Z_p\)</span>,</p>
+<p><span class="math display">\[ H_i(\mathbb RP^2; \mathbb Z_p) = \begin{cases} \mathbb Z_p &amp; i = 1 \\ \mathbb Z_p &amp; i = 1, p = 2 \\ 0 &amp;  i = 1, p \neq 2 \\ 0 &amp; i \geq 2 \end{cases} \&gt;. \]</span></p>
+<aside class="notes">
+    <p>Technically, the corollary doesn't tell us how to calculate the homology in zeroth dimension. However, when the coefficients are in a field, H_0 still counts the connected components. The argument is analogous to the integer coefficient case.</p>
+</aside>
+</section></section>
+<section><section id="calculations" class="titleslide slide level1"><h1>Calculations</h1></section><section id="javaplex-library" class="slide level2">
+<h2>Javaplex library</h2>
+<p>To use the library, first download the latest <code>.jar</code> file from <a href="https://github.com/appliedtopology/javaplex/releases/" class="uri">https://github.com/appliedtopology/javaplex/releases/</a>.</p>
+<p>A somewhat simplified interface is available for Matlab, with examples and a <a href="http://www.math.colostate.edu/~adams/research/javaplex_tutorial.pdf">tutorial</a> for it.</p>
+<p>Otherwise, the java interface can be accessed through jython, Mathematica, or other systems that support loading java libraries.</p>
+</section><section id="some-scripts-to-make-code-run" class="slide level2">
+<h2>Some scripts to make code run</h2>
+<p>I have also written a few scripts that somewhat simplified the procedure. Download them at <a href="https://github.com/Elliot2560/BasicPersistenceHomology" class="uri">https://github.com/Elliot2560/BasicPersistenceHomology</a> by running</p>
+<pre><code>git clone https://github.com/Elliot2560/BasicPersistenceHomology</code></pre>
+<p>or just downloading the zip.</p>
+<p>It includes a java program that computes the persistence homology, and a python program that plots diagrams from the result.</p>
+</section><section id="running-with-eclipse" class="slide level2">
+<h2>Running with Eclipse</h2>
+<ul>
+<li>Use <code>File &gt; Open Projects from File System</code> to import the directory <code>BasicPersistentHomology/java.</code></li>
+<li>Go to <code>File &gt; Properties &gt; Java Build Path</code>, select the <code>Libraries</code> tab.</li>
+<li>Use <code>Add External JARs</code> to add the <code>javaplex-4.2.5.jar</code> library file.</li>
+<li>Open the <code>Main.java</code> file, run by clicking on <code>Run &gt; Run</code>, or hit <code>Ctrl+F11</code>.</li>
+</ul>
+</section><section id="running-with-intellij-idea" class="slide level2">
+<h2>Running with Intellij IDEA</h2>
+<ul>
+<li>Use <code>File &gt; New &gt; Project from Existing Sources</code> to open the directory <code>BasicPersistentHomology/java</code>.</li>
+<li>Keep hitting <code>Next</code> until a new project is created.</li>
+<li>Go to <code>File &gt; Project Structure &gt; Modules</code>.</li>
+<li>On the <code>Dependencies</code> tab, click on the “+” button, use the first option to add the <code>javaplex-4.2.5.jar</code> file.</li>
+<li>Open the <code>Main.java</code> file, run by right clicking and selecting <code>Run 'Main.main()'</code>, or hit <code>Ctrl+Shift+F10</code>.</li>
+</ul>
+</section><section id="directly-compiling-and-running" class="slide level2">
+<h2>Directly compiling and running</h2>
+<p>In a terminal,</p>
+<ul>
+<li>Go to the <code>BasicPersistentHomology/java</code> directory.</li>
+<li><p>Compile:</p>
+<pre><code>&gt; javac -classpath /dir/to/javaplex-4.2.5.jar Main.java</code></pre>
+(edit <code>/dir/to/javaplex-4.2.5.jar</code> to the actual file path of the library).</li>
+<li><p>Run:</p>
+<pre><code>&gt; java -classpath .:/dir/to/javaplex-4.2.5.jar Main</code></pre></li>
+</ul>
+</section><section id="input" class="slide level2">
+<h2>Input</h2>
+<p>The input is a text file containing the coordinates of points in the dataset.</p>
+<p>Each line of the input file represents a point. The coordinates are separated by commas. Every point should have the same dimension.</p>
+<p>For example:</p>
+<pre><code>5.1,3.5,1.4,0.2
+4.9,3.0,1.4,0.2
+4.7,3.2,1.3,0.2
+4.6,3.1,1.5,0.2
+...</code></pre>
+</section><section id="parameters" class="slide level2">
+<h2>Parameters</h2>
+<table style="width:83%;">
+<colgroup>
+<col style="width: 26%" />
+<col style="width: 56%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Parameters</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>String inputFile</code></td>
+<td>Full file url of the input file.</td>
+</tr>
+<tr class="even">
+<td><code>String outputFile</code></td>
+<td>Full file url of the output file</td>
+</tr>
+<tr class="odd">
+<td><code>int characteristic</code></td>
+<td>Characteristic of the coefficient field.</td>
+</tr>
+<tr class="even">
+<td><code>int numLandmarkPoints</code></td>
+<td>Number of points sampled from the data set.</td>
+</tr>
+<tr class="odd">
+<td><code>int maxDimension</code></td>
+<td>The maximum dimension for which the persistence homology is computed</td>
+</tr>
+<tr class="even">
+<td><code>double filtrationRatio</code></td>
+<td>Determines the maximum filtration index used to generate the witness complex.</td>
+</tr>
+<tr class="odd">
+<td><code>int numDivisions</code></td>
+<td>Number of steps to take when generating the complex.</td>
+</tr>
+</tbody>
+</table>
+<aside class="notes">
+    <p>When characterstic is a prime p, the homology groups are calculated over Z/pZ. When it is zero, the default algorithm of javaplex is used, which should be over Z/2Z.</p>
+    <p>The filtrationRatio and numDivisions parameters determine the set of filtration indices (t in the definition of the witness complex). </p>
+    <p>The larger filtrationRatio is, the larger the maximum of t is.</p>
+    <p>The larger numDivisions is, the more steps there are between 0 and the maximum of t when computing the complex.</p>
+</aside>
+</section><section id="plotting-diagrams" class="slide level2">
+<h2>Plotting diagrams</h2>
+<p>The python program <code>plot_persistence.py</code> can visualize the output of the program by plotting the barcode and persistence diagrams. Matplotlib and python3 are required to run it.</p>
+<p>Under Windows, execute the following in command line</p>
+<pre><code>&gt; py -3 plot_persistence.py [arguments]</code></pre>
+<p>Under macOS and Linux, run</p>
+<pre><code>&gt; python3 plot_persistence.py [arguments]</code></pre>
+<p>Use the <code>-h</code> or <code>--help</code> option to see the help message for the program.</p>
+</section></section>
+<section><section id="results" class="titleslide slide level1"><h1>Results</h1></section><section id="persistence-intervals" class="slide level2">
+<h2>Persistence intervals</h2>
+<p>The output of the program looks like,</p>
+<pre><code>Dimension: 0
+[0.0, 0.007937253933193769)
+...
+[0.0, infinity)
+...
+Dimension: 1
+[0.0, 0.015874507866387538)
+...
+Dimension: 2
+[0.07143528539874391, 0.07937253933193769)
+...</code></pre>
+<p>Each of the interval represents the birth and life “time” of a “feature” (a homology class) in the persistence module.</p>
+<aside class="notes">
+    <p>If at time t, a new simplex is added to the complex, and in n-th dimension, a feature (homology class) appeared, then we say the feature is born at time t.</p>
+    <p>All zero dimensional features are born at t=0. In witness complexes, there may even be higher dimensional features born at this time.</p>
+    <p>If then at time t', a new simplex is added, and in n-th dimension, a feature disappears, then we identify the underlying homology class, find its birth time, and mark that feature as dead, and output a persistence interval in dimension n.</p>
+    <p>Often with the addition of a k-simplex, a k-1 feature is killed and a k feature is born, but both need not happen.</p>
+</aside>
+</section><section id="barcode-diagrams-and-persistence-diagrams" class="slide level2">
+<h2>Barcode diagrams and persistence diagrams</h2>
+<p>The persistence intervals can be represented directly as barcodes, or as persistence diagrams. In persistence diagrams, the horizontal axis is the birth time of a feature, and the vertical axis is the death time of a feature.</p>
+<p>As an example, the following are the barcode and persistence diagrams of a torus:</p>
+<div style="text-align: center;">
+<p><img src="assets/torus.out.barcode.svg" alt="Barcode diagram of points sampled from a torus embedded in \mathbb R^4" style="width:32.0%" /> <img src="assets/torus.out.diagram.svg" alt="Persistence diagram of points sampled from a torus embedded in \mathbb R^4" style="width:32.0%" /></p>
+</div>
+<aside class="notes">
+    <p>At any time t, the number of barcodes give the Betti number in each dimension of the complex.</p>
+    <p>The features that survive until infinity are the robust topological features of the underlying space.</p>
+    <p>Ideally, we want to embed a data set into an ambient space that preserves the distance between data points as much as possible. Here the points on the torus is sampled from an embedding in R^4. If we were to further embed it into R^3, then the result may become quite unsatisfactory, because the distances are distorted.</p>
+</aside>
+</section><section id="projective-plane" class="slide level2">
+<h2>Projective plane</h2>
+<p>We can use JavaPlex to calculate the persistence homology of <span class="math inline">\(\mathbb RP^2\)</span> over different fields and see what kind of torsions are present in the homology groups.</p>
+<p>Recall that the one dimensional homology groups are different over <span class="math inline">\(\mathbb Z/p\mathbb Z\)</span> for different <span class="math inline">\(p\)</span>. When <span class="math inline">\(p = 2\)</span>, the homology group is <span class="math inline">\(\mathbb Z/2\mathbb Z\)</span>, otherwise it is <span class="math inline">\(0\)</span>.</p>
+</section><section id="persistence-homology-of-projective-plane-over-mathbb-z2mathbb-z" class="slide level2">
+<h2>Persistence homology of projective plane over <span class="math inline">\(\mathbb Z/2\mathbb Z\)</span></h2>
+<div style="text-align: center">
+<p><img src="assets/rp2.z2.out.barcode.svg" style="width:32.0%" /> <img src="assets/rp2.z2.out.diagram.svg" style="width:32.0%" /></p>
+</div>
+</section><section id="persistence-homology-of-projective-plane-over-mathbb-z3mathbb-z" class="slide level2">
+<h2>Persistence homology of projective plane over <span class="math inline">\(\mathbb Z/3\mathbb Z\)</span></h2>
+<div style="text-align: center">
+<p><img src="assets/rp2.z3.out.barcode.svg" style="width:32.0%" /> <img src="assets/rp2.z3.out.diagram.svg" style="width:32.0%" /></p>
+</div>
+</section><section id="persistence-homology-of-projective-plane-over-mathbb-z5mathbb-z" class="slide level2">
+<h2>Persistence homology of projective plane over <span class="math inline">\(\mathbb Z/5\mathbb Z\)</span></h2>
+<div style="text-align: center">
+<p><img src="assets/rp2.z5.out.barcode.svg" style="width:32.0%" /> <img src="assets/rp2.z5.out.diagram.svg" style="width:32.0%" /></p>
+</div>
+</section><section id="iris-data-set" class="slide level2">
+<h2>Iris data set</h2>
+<p>Iris data set is a classic data set used to verify an algorithm’s pattern recognition capability. Each data point is a set of four real numbers, and there are four clusters of points.</p>
+<p>Persistent homology can identify the connected components of the data set.</p>
+<div style="text-align: center">
+<p><img src="assets/iris.out.barcode.svg" style="width:32.0%" /> <img src="assets/iris.out.diagram.svg" style="width:32.0%" /></p>
+</div>
+</section></section>
+    </div>
+  </div>
+
+  <script src="reveal.js/lib/js/head.min.js"></script>
+  <script src="reveal.js/js/reveal.js"></script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+
+        // Optional reveal.js plugins
+        dependencies: [
+          { src: 'reveal.js/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+          { src: 'reveal.js/plugin/zoom-js/zoom.js', async: true },
+              { src: 'reveal.js/plugin/notes/notes.js', async: true }
+        ]
+      });
+    </script>
+    <script>
+  MathJax.Hub.setRenderer("HTML-CSS");
+  MathJax.Hub.Config({
+      "HTML-CSS": {
+          preferredFont: "STIX"
+      }
+  });
+  </script>
+    </body>
+</html>
