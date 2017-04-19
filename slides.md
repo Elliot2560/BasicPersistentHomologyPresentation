@@ -115,9 +115,9 @@ Otherwise, the java interface can be accessed through jython, Mathematica, or ot
 
 ## Some scripts to make code run
 
-I have also written a few scripts that somewhat simplified the procedure. Download them at [https://github.com/Elliot2560/BasicPersistenceHomology](https://github.com/Elliot2560/BasicPersistenceHomology) by running
+I have also written a few scripts that somewhat simplified the procedure. Download them at [https://github.com/Elliot2560/BasicPersistentHomology](https://github.com/Elliot2560/BasicPersistentHomology) by running
 ```
-git clone https://github.com/Elliot2560/BasicPersistenceHomology
+git clone https://github.com/Elliot2560/BasicPersistentHomology
 ```
 or just downloading the zip.
 
