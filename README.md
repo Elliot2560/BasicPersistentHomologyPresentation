@@ -2,16 +2,20 @@
 
 A presentation on computing persistent homology using javaplex.
 
+# View Presentation
+
+View the presentation [here](https://elliot2560.github.io/BasicPersistentHomologyPresentation/index.html)
+
 # Installation
 
-You can clone the repository by 
+You can install the repository locally by 
 ```
 git clone --recursive git://github.com/Elliot2560/BasicPersistentHomologyPresentation
 ```
 
 # Run
 
-View the slides by simply opening the `slides.html` file in a browser (preferably chrome/chromium or firefox). Use arrow keys to navigate. Hit `s` key to view speaker notes. Hit `f` key to view slides in full screen.
+View the slides locally by simply opening the `slides.html` file in a browser (preferably chrome/chromium or firefox). Use arrow keys to navigate. Hit `s` key to view speaker notes. Hit `f` key to view slides in full screen.
 
 # Conversion
 
